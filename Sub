@@ -1,0 +1,286 @@
+
+Sub kuaidixml()
+    Dim xmlhttp As Object, str1$, str2$, str3$, str4$
+    Dim i%, j%
+    
+    lstro = Cells(Rows.Count, 2).End(xlUp).Row
+    
+    On Error Resume Next
+
+     
+    quyu = Application.InputBox("²éÑ¯Ç°ÇëÏÈ±¸·Ý£¬Îª±ÜÃâÍøÕ¾²éÑ¯ÏÞÖÆ£¬Ã¿´Î²éÑ¯²»Òª³¬¹ý100¸ö£¬2Ð¡Ê±ÄÚ²»ÄÜÆµ·±²éÑ¯" & Chr(13) & Chr(13) & "ÇëÑ¡ÔñÒª²éÑ¯µÄ¿ìµÝµ¥ºÅËùÔÚÇøÓò", "Ñ¡ÔñÒª²éÑ¯µÄ¿ìµÝµ¥ºÅËùÔÚÇøÓò", "", Type:=8).Address
+     
+  
+    Range(quyu).Select
+    
+    s = Range(quyu).Cells(1, 1).Row
+    t = Range(quyu).Rows.Count + s - 1
+        
+    If s = False Then Exit Sub
+    If s > lstro Then MsgBox "¿ªÊ¼ÐÐºÅ²»ÄÜ´óÓÚ±í¸ñÖÐÒÑÊ¹ÓÃµÄ×ÜÐÐÊý!": Exit Sub
+    
+    If t = False Then Exit Sub
+    If t < s Then MsgBox "½áÊøÐÐºÅ²»ÄÜÐ¡ÐÐ¿ªÊ¼ÐÐºÅ£¡": Exit Sub
+    Application.ScreenUpdating = False
+    Application.EnableEvents = False
+    
+        Set HTML = CreateObject("htmlfile")
+        
+        
+    With CreateObject("msxml2.xmlhttp")
+     For j = s To t
+      If Cells(j, 2) <> "" Then
+        .Open "get", "http://www.kuaidi100.com/autonumber/autoComNum?text=" & Trim(Cells(j, 2).Value), False
+        .send    'postÇëÇó£¬Ä¿µÄÊÇ»ñµÃ¿ìµÝ¹«Ë¾Ãû³Æ
+        str1 = Split(Split(.responsetext, "comCode"":""")(2), """")(0)
+        
+        
+        .Open "GET", "http://www.kuaidi100.com/query?type=" & str1 & "&postid=" & Trim(Cells(j, 2).Value), False
+        
+        .setRequestHeader "Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8"
+        .setRequestHeader "User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.99 Safari/537.36"
+        '.setRequestHeader "X-Requested-With", "XMLHttpRequest"
+        '.setRequestHeader "Referer", "http://www.kuaidi100.com/"
+        .send
+        str2 = .responsetext  'È¡µÃÎïÁ÷Êý¾Ý
+        
+        
+        
+        'str3 = Split(Split(str2, "{""time"":""")(2), """,""context"":""")(0) & "  " & Split(Split(str2, """context"":""")(2), """,""ftime"":""")(0)
+        'str4 = Split(Split(str2, "{""time"":""")(1), """,""context"":""")(0) & "  " & Split(Split(str2, """context"":""")(1), """,""ftime"":""")(0)
+
+            Cells(j, 5) = str2
+            str5 = Split(str2, "ftime"":""")(UBound(Split(str2, "ftime"":""")))
+            Cells(j, 3) = str5
+            
+        If InStr(str2, "Ç©ÊÕ") Or InStr(str2, "Delivered") Or InStr(str2, "ËÍ´ï") Then
+            Cells(j, 4) = "ÒÑÇ©ÊÕ"
+        ElseIf InStr(str2, "ÒÑÊÕ") And InStr(str2, "ÅÉ¼þ") = 0 Then Cells(j, 3) = "ÔÚÍ¾ÖÐ"
+        ElseIf InStr(str2, "ÒÑÀ¿ÊÕ") And InStr(str2, "ÅÉ¼þ") = 0 Then Cells(j, 3) = "ÔÚÍ¾ÖÐ"
+        ElseIf InStr(str2, "À¿¼þ") And InStr(str2, "ÅÉ¼þ") = 0 Then Cells(j, 3) = "ÔÚÍ¾ÖÐ"
+        ElseIf InStr(str2, "ÅÉ¼þ") Then Cells(j, 3) = "ÅÉËÍÖÐ"
+        ElseIf InStr(str2, "²ÎÊýÒì³£") Then Cells(j, 3) = "ÔÝÎÞ¼ÇÂ¼"
+        End If
+        
+             End If
+     Next
+    End With
+        
+    With Columns("E:E")
+    
+    .replace What:="{""message*ftime"":""", Replacement:="", LookAt _
+        :=xlPart, SearchOrder:=xlByRows, MatchCase:=False, SearchFormat:=False, _
+        ReplaceFormat:=False
+    .replace What:=""",""context"":""", Replacement:="", LookAt:= _
+        xlPart, SearchOrder:=xlByRows, MatchCase:=False, SearchFormat:=False, _
+        ReplaceFormat:=False
+    .replace What:="{""time"":""*ftime"":""", Replacement:="", LookAt _
+        :=xlPart, SearchOrder:=xlByRows, MatchCase:=False, SearchFormat:=False, _
+        ReplaceFormat:=False
+    .replace What:=""",""location*}", Replacement:="", LookAt:= _
+        xlPart, SearchOrder:=xlByRows, MatchCase:=False, SearchFormat:=False, _
+        ReplaceFormat:=False
+        
+
+    .HorizontalAlignment = xlLeft
+    .WrapText = False
+    
+    End With
+    
+        With Columns("C:C")
+    .replace What:=""",""context*location*", Replacement:="" _
+        , LookAt:=xlPart, SearchOrder:=xlByRows, MatchCase:=False, SearchFormat _
+        :=False, ReplaceFormat:=False
+
+    .HorizontalAlignment = xlLeft
+    .WrapText = False
+    .AutoFit
+    
+    End With
+    
+    
+    Application.ScreenUpdating = True
+    Application.EnableEvents = True
+    
+End Sub
+
+
+Sub kuaidixmlBackUp3_RangeOS()
+    Dim xmlhttp As Object, str1$, str2$, str3$, str4$
+    Dim i%, j%
+    
+    lstro = Cells(Rows.Count, 2).End(xlUp).Row
+    
+    quyu = Application.InputBox("²éÑ¯Ç°ÇëÏÈ±¸·Ý,Îª±ÜÃâÍøÕ¾²éÑ¯ÏÞÖÆ£¬Ã¿´Î²éÑ¯²»Òª³¬¹ý100¸ö£¬2Ð¡Ê±ÄÚ²»ÄÜÆµ·±²éÑ¯" & Chr(13) & Chr(13) & "ÇëÑ¡ÔñÒª²éÑ¯µÄ¿ìµÝµ¥ºÅËùÔÚÇøÓò", "Ñ¡ÔñÒª²éÑ¯µÄ¿ìµÝµ¥ºÅËùÔÚÇøÓò", "A1:A2", Type:=8).Address
+    MsgBox quyu
+        
+    Range(quyu).Select
+    
+        
+
+    If quyu = False Then Exit Sub
+    If s > lstro Then MsgBox "¿ªÊ¼ÐÐºÅ²»ÄÜ´óÓÚ±í¸ñÖÐÒÑÊ¹ÓÃµÄ×ÜÐÐÊý!": Exit Sub
+    t = Application.InputBox("ÇëÄãÊäÈëÄãÏë²éÑ¯µÄ½áÊøÐÐºÅ" & Chr(13) & Chr(13) & "Îª±ÜÃâ¿ìµÝ100²éÑ¯ÏÞÖÆ£¬Ã¿´Î²éÑ¯²»Òª³¬¹ý100¸ö£¬2Ð¡Ê±ÄÚ²»ÄÜÆµ·±²éÑ¯", "ÊäÈë½áÊøÐÐºÅ", lstro, Type:=1)
+    If t = False Then Exit Sub
+    If t < s Then MsgBox "½áÊøÐÐºÅ²»ÄÜÐ¡ÐÐ¿ªÊ¼ÐÐºÅ£¡": Exit Sub
+    Application.ScreenUpdating = True
+    Application.EnableEvents = False
+    
+    Set xmlhttp = CreateObject("WinHttp.WinHttpRequest.5.1")
+    With xmlhttp
+     For j = s To t
+      If Cells(j, 2) <> "" And Cells(j, 3) <> "ÒÑÇ©ÊÕ" Then
+        .Open "POST", "http://www.kuaidi100.com/autonumber/autoComNum?text=" & Trim(Cells(j, 2).Value)
+        .send    'postÇëÇó£¬Ä¿µÄÊÇ»ñµÃ¿ìµÝ¹«Ë¾Ãû³Æ
+        str1 = Split(Split(.responsetext, "comCode"":""")(2), """")(0)
+        .Open "GET", "http://www.kuaidi100.com/query?type=" & str1 & "&postid=" & Trim(Cells(j, 2).Value)
+        .setRequestHeader "X-Requested-With", "XMLHttpRequest"
+        .setRequestHeader "Referer", "http://www.kuaidi100.com/"
+        .send
+        str2 = .responsetext  'È¡µÃÎïÁ÷Êý¾Ý
+        str3 = Split(Split(str2, "{""time"":""")(2), """,""context"":""")(0) & "  " & Split(Split(str2, """context"":""")(2), """,""ftime"":""")(0)
+        str4 = Split(Split(str2, "{""time"":""")(1), """,""context"":""")(0) & "  " & Split(Split(str2, """context"":""")(1), """,""ftime"":""")(0)
+       
+            Cells(j, 4) = str2
+        
+             End If
+     Next
+    End With
+        
+    With Columns("D:D")
+    
+    .replace What:="{""message*ftime"":""", Replacement:="", LookAt _
+        :=xlPart, SearchOrder:=xlByRows, MatchCase:=False, SearchFormat:=False, _
+        ReplaceFormat:=False
+    .replace What:=""",""context"":""", Replacement:="", LookAt:= _
+        xlPart, SearchOrder:=xlByRows, MatchCase:=False, SearchFormat:=False, _
+        ReplaceFormat:=False
+    .replace What:="{""time"":""*ftime"":""", Replacement:="", LookAt _
+        :=xlPart, SearchOrder:=xlByRows, MatchCase:=False, SearchFormat:=False, _
+        ReplaceFormat:=False
+    .replace What:=""",""location*}", Replacement:="", LookAt:= _
+        xlPart, SearchOrder:=xlByRows, MatchCase:=False, SearchFormat:=False, _
+        ReplaceFormat:=False
+        
+
+    .HorizontalAlignment = xlLeft
+    .WrapText = False
+    
+    End With
+    
+    Application.ScreenUpdating = True
+    Application.EnableEvents = True
+    
+End Sub
+
+
+
+Sub kuaidixmlBackUp1()
+    Dim xmlhttp As Object, str1$, str2$, str3$, str4$
+    Dim i%, j%
+    
+    lstro = Cells(Rows.Count, 2).End(xlUp).Row
+    s = Application.InputBox("ÇëÄãÊäÈëÄãÏë²éÑ¯µÄ¿ªÊ¼ÐÐºÅ" & Chr(13) & Chr(13) & "²éÑ¯Ç°ÇëÏÈ±£´æ¶©µ¥±í£¬·ÀÖ¹³öÏÖÎ´ÏìÓ¦¶øÒâÍâ¹Ø±ÕÎ´±£´æ" & Chr(13) & Chr(13) & "Îª±ÜÃâ¿ìµÝ100²éÑ¯ÏÞÖÆ£¬Ã¿´Î²éÑ¯²»Òª³¬¹ý100¸ö£¬2Ð¡Ê±ÄÚ²»ÄÜÆµ·±²éÑ¯", "ÊäÈë¿ªÊ¼ÐÐºÅ", 2, Type:=1)
+    If s = False Then Exit Sub
+    If s > lstro Then MsgBox "¿ªÊ¼ÐÐºÅ²»ÄÜ´óÓÚ±í¸ñÖÐÒÑÊ¹ÓÃµÄ×ÜÐÐÊý!": Exit Sub
+    t = Application.InputBox("ÇëÄãÊäÈëÄãÏë²éÑ¯µÄ½áÊøÐÐºÅ" & Chr(13) & Chr(13) & "Îª±ÜÃâ¿ìµÝ100²éÑ¯ÏÞÖÆ£¬Ã¿´Î²éÑ¯²»Òª³¬¹ý100¸ö£¬2Ð¡Ê±ÄÚ²»ÄÜÆµ·±²éÑ¯", "ÊäÈë½áÊøÐÐºÅ", lstro, Type:=1)
+    If t = False Then Exit Sub
+    If t < s Then MsgBox "½áÊøÐÐºÅ²»ÄÜÐ¡ÐÐ¿ªÊ¼ÐÐºÅ£¡": Exit Sub
+    Application.ScreenUpdating = False
+    Application.EnableEvents = False
+    
+    Set xmlhttp = CreateObject("WinHttp.WinHttpRequest.5.1")
+    With xmlhttp
+     For j = s To t
+      If Cells(j, 2) <> "" And Cells(j, 3) <> "ÒÑÇ©ÊÕ" Then
+        .Open "POST", "http://www.kuaidi100.com/autonumber/autoComNum?text=" & Trim(Cells(j, 2).Value)
+        .send    'postÇëÇó£¬Ä¿µÄÊÇ»ñµÃ¿ìµÝ¹«Ë¾Ãû³Æ
+        str1 = Split(Split(.responsetext, "comCode"":""")(2), """")(0)
+        .Open "GET", "http://www.kuaidi100.com/query?type=" & str1 & "&postid=" & Trim(Cells(j, 2).Value)
+        .setRequestHeader "X-Requested-With", "XMLHttpRequest"
+        .setRequestHeader "Referer", "http://www.kuaidi100.com/"
+        .send
+        str2 = .responsetext  'È¡µÃÎïÁ÷Êý¾Ý
+        str3 = Split(Split(str2, "{""time"":""")(2), """,""context"":""")(0) & "  " & Split(Split(str2, """context"":""")(2), """,""ftime"":""")(0)
+        str4 = Split(Split(str2, "{""time"":""")(1), """,""context"":""")(0) & "  " & Split(Split(str2, """context"":""")(1), """,""ftime"":""")(0)
+        If InStr(str4, "Ç©ÊÕ") Then
+            Cells(j, 3) = "ÒÑÇ©ÊÕ"
+            Cells(j, 4) = Left(str4, 20)
+        ElseIf InStr(str2, "ÒÑÊÕ") And InStr(str2, "ÅÉ¼þ") = 0 Then Cells(j, 3) = "ÔÚÍ¾ÖÐ"
+        ElseIf InStr(str2, "ÒÑÀ¿ÊÕ") And InStr(str2, "ÅÉ¼þ") = 0 Then Cells(j, 3) = "ÔÚÍ¾ÖÐ"
+        ElseIf InStr(str2, "À¿¼þ") And InStr(str2, "ÅÉ¼þ") = 0 Then Cells(j, 3) = "ÔÚÍ¾ÖÐ"
+        ElseIf InStr(str2, "ÅÉ¼þ") Then Cells(j, 3) = "ÅÉËÍÖÐ"
+        ElseIf InStr(str2, "²ÎÊýÒì³£") Then Cells(j, 3) = "ÔÝÎÞ¼ÇÂ¼"
+        End If
+      End If
+     Next
+    End With
+    Columns("C:D").AutoFit
+    Range("C2:D" & t).HorizontalAlignment = xlLeft
+    Range("D:D").NumberFormatLocal = "yyyy-m-d"
+    Application.ScreenUpdating = True
+    Application.EnableEvents = True
+End Sub
+
+
+Sub kuaidixmlBackUp2_shuruhanghaofa()
+    Dim xmlhttp As Object, str1$, str2$, str3$, str4$
+    Dim i%, j%
+    
+    lstro = Cells(Rows.Count, 2).End(xlUp).Row
+    s = Application.InputBox("ÇëÄãÊäÈëÄãÏë²éÑ¯µÄ¿ªÊ¼ÐÐºÅ" & Chr(13) & Chr(13) & "²éÑ¯Ç°ÇëÏÈ±£´æ¶©µ¥±í£¬·ÀÖ¹³öÏÖÎ´ÏìÓ¦¶øÒâÍâ¹Ø±ÕÎ´±£´æ" & Chr(13) & Chr(13) & "Îª±ÜÃâ¿ìµÝ100²éÑ¯ÏÞÖÆ£¬Ã¿´Î²éÑ¯²»Òª³¬¹ý100¸ö£¬2Ð¡Ê±ÄÚ²»ÄÜÆµ·±²éÑ¯", "ÊäÈë¿ªÊ¼ÐÐºÅ", 2, Type:=1)
+    If s = False Then Exit Sub
+    If s > lstro Then MsgBox "¿ªÊ¼ÐÐºÅ²»ÄÜ´óÓÚ±í¸ñÖÐÒÑÊ¹ÓÃµÄ×ÜÐÐÊý!": Exit Sub
+    t = Application.InputBox("ÇëÄãÊäÈëÄãÏë²éÑ¯µÄ½áÊøÐÐºÅ" & Chr(13) & Chr(13) & "Îª±ÜÃâ¿ìµÝ100²éÑ¯ÏÞÖÆ£¬Ã¿´Î²éÑ¯²»Òª³¬¹ý100¸ö£¬2Ð¡Ê±ÄÚ²»ÄÜÆµ·±²éÑ¯", "ÊäÈë½áÊøÐÐºÅ", lstro, Type:=1)
+    If t = False Then Exit Sub
+    If t < s Then MsgBox "½áÊøÐÐºÅ²»ÄÜÐ¡ÐÐ¿ªÊ¼ÐÐºÅ£¡": Exit Sub
+    Application.ScreenUpdating = True
+    Application.EnableEvents = False
+    
+    Set xmlhttp = CreateObject("WinHttp.WinHttpRequest.5.1")
+    With xmlhttp
+     For j = s To t
+      If Cells(j, 2) <> "" And Cells(j, 3) <> "ÒÑÇ©ÊÕ" Then
+        .Open "POST", "http://www.kuaidi100.com/autonumber/autoComNum?text=" & Trim(Cells(j, 2).Value)
+        .send    'postÇëÇó£¬Ä¿µÄÊÇ»ñµÃ¿ìµÝ¹«Ë¾Ãû³Æ
+        str1 = Split(Split(.responsetext, "comCode"":""")(2), """")(0)
+        .Open "GET", "http://www.kuaidi100.com/query?type=" & str1 & "&postid=" & Trim(Cells(j, 2).Value)
+        .setRequestHeader "X-Requested-With", "XMLHttpRequest"
+        .setRequestHeader "Referer", "http://www.kuaidi100.com/"
+        .send
+        str2 = .responsetext  'È¡µÃÎïÁ÷Êý¾Ý
+        str3 = Split(Split(str2, "{""time"":""")(2), """,""context"":""")(0) & "  " & Split(Split(str2, """context"":""")(2), """,""ftime"":""")(0)
+        str4 = Split(Split(str2, "{""time"":""")(1), """,""context"":""")(0) & "  " & Split(Split(str2, """context"":""")(1), """,""ftime"":""")(0)
+       
+            Cells(j, 4) = str2
+        
+             End If
+     Next
+    End With
+        
+    With Columns("D:D")
+    
+    .replace What:="{""message*ftime"":""", Replacement:="", LookAt _
+        :=xlPart, SearchOrder:=xlByRows, MatchCase:=False, SearchFormat:=False, _
+        ReplaceFormat:=False
+    .replace What:=""",""context"":""", Replacement:="", LookAt:= _
+        xlPart, SearchOrder:=xlByRows, MatchCase:=False, SearchFormat:=False, _
+        ReplaceFormat:=False
+    .replace What:="{""time"":""*ftime"":""", Replacement:="", LookAt _
+        :=xlPart, SearchOrder:=xlByRows, MatchCase:=False, SearchFormat:=False, _
+        ReplaceFormat:=False
+    .replace What:=""",""location*}", Replacement:="", LookAt:= _
+        xlPart, SearchOrder:=xlByRows, MatchCase:=False, SearchFormat:=False, _
+        ReplaceFormat:=False
+        
+
+    .HorizontalAlignment = xlLeft
+    .WrapText = False
+    
+    End With
+    
+    Application.ScreenUpdating = True
+    Application.EnableEvents = True
+    
+End Sub
+
